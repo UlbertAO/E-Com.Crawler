@@ -9,45 +9,54 @@ namespace E_Com.Crawler
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
         private readonly StorageManager _storageManager;
+        private readonly CrawlerManager _crawlerManager;
+        private readonly Utilities _utilities;
 
-        public Function1(IConfiguration configuration, ILoggerFactory loggerFactory, StorageManager storageManager)
+
+
+        public Function1(IConfiguration configuration, ILoggerFactory loggerFactory, StorageManager storageManager, CrawlerManager crawlerManager, Utilities utilities)
         {
             _configuration = configuration;
             _logger = loggerFactory.CreateLogger<Function1>();
             _storageManager = storageManager;
+            _crawlerManager = crawlerManager;
+            _utilities = utilities;
+
         }
 
         [Function("Function1")]
         public async Task Run([TimerTrigger("0 0 6 * * *", RunOnStartup = true)] TimerInfo timer)
         {
-            _logger.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
+            _logger.LogInformation($"Crawler Timer trigger function executed at: {DateTime.Now}");
             try
             {
                 await _storageManager.CreateContainer();
-                if (_storageManager._containerClient == null)
-                {
-                    throw new Exception("Container not created");
-                }
 
-                var urls = Environment.GetEnvironmentVariable("Ecom_Urls")?.Split(';');
+                var urls = Environment.GetEnvironmentVariable("EcomUrls")?.Split(';');
                 if (urls == null)
                 {
-                    _logger.LogError("No eCommerce URLs found in environment variables.");
-                    return;
+                    var msg = "No URL found in environment variables.";
+                    _logger.LogError(msg);
+                    throw new Exception(msg);
                 }
                 var productHtmls = new List<string>();
                 foreach (var url in urls)
                 {
                     try
                     {
-                        using (var httpClient = new HttpClient())
+                        if (_utilities.isValidUrl(url))
                         {
-                            var response = await httpClient.GetAsync(url);
-                            response.EnsureSuccessStatusCode();
+                            var productLinkList = await _crawlerManager.getAllLinksFromBody(url);
 
-                            var html = await response.Content.ReadAsStringAsync();
-
-                            productHtmls.Add(html);
+                            //var count = 0;
+                            //foreach (var html in productHtmls) { 
+                            //    await _storageManager.UploadBlob($"html_{count}", html);
+                            //    count++;
+                            //}
+                        }
+                        else
+                        {
+                            throw new Exception("not a valid URL");
                         }
                     }
                     catch (Exception ex)
@@ -55,13 +64,6 @@ namespace E_Com.Crawler
                         _logger.LogError($"Error scraping URL {url}: {ex.Message}");
                     }
                 }
-
-                var count = 0;
-                foreach (var html in productHtmls) { 
-                    await _storageManager.UploadBlob($"html_{count}", html);
-                    count++;
-                }
-
             }
             catch (Exception ex)
             {

@@ -3,7 +3,9 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-var host = new HostBuilder()
+try
+{
+    var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
     .ConfigureServices(services =>
     {
@@ -11,7 +13,18 @@ var host = new HostBuilder()
         services.ConfigureFunctionsApplicationInsights();
 
         services.AddScoped<StorageManager>();
+        services.AddScoped<CrawlerManager>();
+        services.AddScoped<ProductLinkManager>();
+        services.AddScoped<Utilities>();
+
+
     })
     .Build();
 
-host.Run();
+    host.Run();
+
+}
+catch (Exception ex)
+{
+    Console.WriteLine(ex.ToString());
+}
