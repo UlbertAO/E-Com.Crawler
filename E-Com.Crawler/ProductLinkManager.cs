@@ -1,4 +1,8 @@
-﻿namespace E_Com.Crawler
+﻿using Google.Protobuf.Collections;
+using System;
+using System.Text.RegularExpressions;
+
+namespace E_Com.Crawler
 {
     public class ProductLinkManager
     {
@@ -9,10 +13,31 @@
             _utilities = utilities;
 
         }
+        public List<string> manager(string url,string baseUrl,List<string> productLinks)
+        {
+            //  keep only urls that starts with baseurl
+            // 1. remove base url links present in product links list not needed upto 2 places of wild characters
+            string urlPattern = @$"{baseUrl}..";
+            productLinks.RemoveAll(link => !Regex.IsMatch(link, urlPattern));
+
+            //2. keep only those url having segments of url provided
+            var productUrlContainsSegments = Boolean.Parse(Environment.GetEnvironmentVariable("ProductUrlContainsSegments"));
+            if (productUrlContainsSegments)
+            {
+                // url:provided in environment variable
+                // links: found in page
+                productLinks = getProductUrlContainsSegments(url, productLinks);
+            }
+
+            //3.now we have all links filter out only child links
+            productLinks = getChildUrls(productLinks);
+
+            return productLinks;
+        }
 
         //url: https://www.domain.com/pro/a/b
         // link: https://www.domain.com/pro/a/b/c/d/e/f=>it contains some segment of url so might be product link
-        public List<string> getProductUrlContainsSegments(string url, List<string> productLinks)
+        private List<string> getProductUrlContainsSegments(string url, List<string> productLinks)
         {
             var segments = new Uri(url).LocalPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             // Remove strings whose length is less than 2
@@ -37,7 +62,7 @@
          https://www.domain.com/products/a/b/c/d=> only need this link
          */
         //basically getonly child logic
-        public List<string> getChildUrls(List<string> links)
+        private List<string> getChildUrls(List<string> links)
         {
             //unique 1st then sort
             //descending order of the length of sting in list and then sort in ascending order of string characters

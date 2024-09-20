@@ -12,8 +12,6 @@ namespace E_Com.Crawler
         private readonly CrawlerManager _crawlerManager;
         private readonly Utilities _utilities;
 
-
-
         public Function1(IConfiguration configuration, ILoggerFactory loggerFactory, StorageManager storageManager, CrawlerManager crawlerManager, Utilities utilities)
         {
             _configuration = configuration;
@@ -27,7 +25,7 @@ namespace E_Com.Crawler
         [Function("Function1")]
         public async Task Run([TimerTrigger("0 0 6 * * *", RunOnStartup = true)] TimerInfo timer)
         {
-            _logger.LogInformation($"Crawler Timer trigger function executed at: {DateTime.Now}");
+            _logger.LogInformation($"Crawler Timer trigger function execution started at: {DateTime.Now}");
             try
             {
                 await _storageManager.CreateContainer();
@@ -39,24 +37,30 @@ namespace E_Com.Crawler
                     _logger.LogError(msg);
                     throw new Exception(msg);
                 }
-                var productHtmls = new List<string>();
                 foreach (var url in urls)
                 {
                     try
                     {
                         if (_utilities.isValidUrl(url))
                         {
-                            var productLinkList = await _crawlerManager.getAllLinksFromBody(url);
+                            var productLinkTitleDict = await _crawlerManager.crawler(url);
 
-                            //var count = 0;
-                            //foreach (var html in productHtmls) { 
-                            //    await _storageManager.UploadBlob($"html_{count}", html);
-                            //    count++;
-                            //}
+                            var count = 1;
+                            var totalCount = productLinkTitleDict.Count;
+
+                            _logger.LogInformation($"Upload product HTML content started for {url}");
+
+                            foreach (var keyValuePair in productLinkTitleDict)
+                            {
+                                await _storageManager.UploadBlob(new Uri(url).Host, keyValuePair.Value, await _crawlerManager.crawlerForContent(keyValuePair.Key));
+                                _logger.LogInformation($"{count}/{totalCount}");
+                                count++;
+                            }
+                            _logger.LogInformation($"Upload Ended");
                         }
                         else
                         {
-                            throw new Exception("not a valid URL");
+                            throw new Exception($"{url} is not a valid URL");
                         }
                     }
                     catch (Exception ex)
@@ -74,6 +78,8 @@ namespace E_Com.Crawler
             {
                 if (timer.ScheduleStatus is not null)
                 {
+                    _logger.LogInformation($"Crawler Timer trigger function execution ended at: {DateTime.Now}");
+
                     _logger.LogInformation($"Next timer schedule at: {timer.ScheduleStatus.Next}");
                 }
             }

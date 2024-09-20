@@ -1,5 +1,6 @@
 ﻿using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
+using System;
 
 
 namespace E_Com.Crawler
@@ -34,18 +35,23 @@ namespace E_Com.Crawler
             _containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
             await _containerClient.CreateIfNotExistsAsync();
         }
-        public async Task UploadBlob(string productName, string htmlContent)
+        public async Task UploadBlob(string hostName, string productName, string htmlContent)
         {
-            var currentDate = DateTime.Now.ToString("yyyy/MM/dd");
-            var blobName = $"{currentDate}/{productName}.html";
-
-            BlobClient blobClient = _containerClient.GetBlobClient(blobName);
-
-
-            using (var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(htmlContent)))
+            try
             {
-                await blobClient.UploadAsync(stream, overwrite: true);
-                _logger.LogInformation($"Uploaded HTML to blob storage.");
+                var currentDate = DateTime.Now.ToString("yyyy/MM/dd");
+                var blobName = $"{currentDate}/{hostName}/{productName.Replace("/", "_")}.html";
+
+                BlobClient blobClient = _containerClient.GetBlobClient(blobName);
+
+                using (var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(htmlContent)))
+                {
+                    await blobClient.UploadAsync(stream, overwrite: true);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Something went wrong, could not upload content for : {productName}");
             }
         }
 
