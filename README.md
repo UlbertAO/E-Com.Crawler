@@ -15,10 +15,10 @@ This project creates Azure functions that download all the product pages from th
 * [Fanatics](https://www.fanatics.co.uk/en/premier-league/o-10089362+z-9896720-1139193336?pageSize=96&pageNumber=1&sortOption=TopSellers&vap=1)
 
 ## Use cases:
-* ### Price Comparison.
-* ### Content Analysis.
-* ### Product Data Monitoring.
-* ### Make a blog of products.
+* #### Price Comparison.
+* #### Content Analysis.
+* #### Product Data Monitoring.
+* #### Make a blog of products.
 
 ## Local setup
 In order to run this locally you would need 'local.settings.json'
