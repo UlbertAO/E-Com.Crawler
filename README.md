@@ -10,3 +10,26 @@ https://store.celticfc.com/collections
 https://www4.chelseamegastore.com/en/chelsea-men/t-43110668+ga-34+z-915271-809855383
 https://evertondirect.evertonfc.com/en/everton/t-19321265+z-9197965-3477742524?pageSize=96&cur=GBP&sortOption=TopSellers&vap=1
 https://www.fanatics.co.uk/en/premier-league/o-10089362+z-9896720-1139193336?pageSize=96&pageNumber=1&sortOption=TopSellers&vap=1
+
+## Local setup
+In order to run this locally you would need 'local.settings.json'
+
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "ContainerName": "html-data",
+    //"EcomUrls": "https://www.example1.com/category1/;https://www.example2.com/category2/,
+    "ThresholdTitleLength": 3,
+    "ProductUrlContainsSegments": true
+  }
+}
+```
+
+execute following for headless chromium browser
+
+```bash
+./bin/Debug/netX/playwright.ps1 install
+```
