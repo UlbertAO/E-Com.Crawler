@@ -1,6 +1,4 @@
-﻿using Google.Protobuf.Collections;
-using System;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace E_Com.Crawler
 {
@@ -13,21 +11,38 @@ namespace E_Com.Crawler
             _utilities = utilities;
 
         }
-        public List<string> manager(string url,string baseUrl,List<string> productLinks)
+        public List<string> manager(string url, string baseUrl, List<string> productLinks)
         {
-            //  keep only urls that starts with baseurl
-            // 1. remove base url links present in product links list not needed upto 2 places of wild characters
-            string urlPattern = @$"{baseUrl}..";
-            productLinks.RemoveAll(link => !Regex.IsMatch(link, urlPattern));
+            //assumption: query part does not hold value to differentiate product
+            // sanity: remove all query part from the url in list 
+            productLinks = productLinks.Select(link => _utilities.removeQueryPartUrl(link)).ToList();
 
+            // assumption: after baseurl & url are query sanitized url path without / . is not a product link
+            string urlPattern1 = @$"{Regex.Escape(baseUrl)}" + @".[^/.]*$";
+            productLinks.RemoveAll(link => Regex.IsMatch(link, urlPattern1));
+            string urlPattern2 = @$"{Regex.Escape(_utilities.removeQueryPartUrl(url))}" + @".[^/.]*$";
+            productLinks.RemoveAll(link => Regex.IsMatch(link, urlPattern2));
+
+            // assumption urls followed by base url having words seperated by / is not a product url
+            string urlPattern3 = @$"{Regex.Escape(_utilities.removeQueryPartUrl(baseUrl))}" + @"(\/[a-zA-Z]+)+$"; // ^(\/[a-zA-Z]+)+$
+            productLinks.RemoveAll(link => Regex.IsMatch(link, urlPattern3));
+
+
+            // assumption: final product link will have atleast 2 segment 
+            //https://www.domain.com/category/product
+            //https://www.domain.com/product IGNORING
+            productLinks.RemoveAll(link => new Uri(link).LocalPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries).Length < 2);
+
+            // THIS WILL NOT WORK CUZ IN MANY CASES PRODUCT LINK AND SEG HAVE NO CONNECTION but keeping this for future ref
             //2. keep only those url having segments of url provided
-            var productUrlContainsSegments = Boolean.Parse(Environment.GetEnvironmentVariable("ProductUrlContainsSegments"));
-            if (productUrlContainsSegments)
-            {
-                // url:provided in environment variable
-                // links: found in page
-                productLinks = getProductUrlContainsSegments(url, productLinks);
-            }
+            // this will remove products if product url dont have segments present actually
+            //var productUrlContainsSegments = Boolean.Parse(Environment.GetEnvironmentVariable("ProductUrlContainsSegments"));
+            //if (productUrlContainsSegments)
+            //{
+            //    // url:provided in environment variable
+            //    // links: found in page
+            //    productLinks = getProductUrlContainsSegments(url, productLinks);
+            //}
 
             //3.now we have all links filter out only child links
             productLinks = getChildUrls(productLinks);
@@ -53,7 +68,7 @@ namespace E_Com.Crawler
             return possibleProductLinks;
         }
 
-        
+
         /*
          https://www.domain.com/products/
          https://www.domain.com/products/a
@@ -77,7 +92,7 @@ namespace E_Com.Crawler
                 }
                 possibleProductLinks.Add(url);
 
-                itemsToRemove.AddRange(_utilities.getProgressiveUrls(url));
+                itemsToRemove.AddRange(_utilities.getProgressiveUrls(url));//refactor required
                 itemsToRemove = itemsToRemove.Distinct().ToList();
 
             }

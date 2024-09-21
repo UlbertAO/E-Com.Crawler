@@ -1,4 +1,6 @@
 ﻿
+using System.Text.RegularExpressions;
+
 namespace E_Com.Crawler
 {
     public class Utilities
@@ -46,6 +48,11 @@ namespace E_Com.Crawler
                 result.Add(currentUrl.Substring(0, currentUrl.Length - 1));
             }
             return result;
+        }
+        public string removeQueryPartUrl(string url)
+        {
+            string removeQueryPattern = @"\?.*$";//?.*{n}
+            return Regex.Replace(url, removeQueryPattern, "");
         }
     }
 }

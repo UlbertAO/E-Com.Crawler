@@ -1,10 +1,6 @@
 ﻿using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
-using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-
 
 namespace E_Com.Crawler
 {
@@ -14,7 +10,7 @@ namespace E_Com.Crawler
         private readonly Utilities _utilities;
         private readonly ILogger _logger;
 
-        public CrawlerManager(ILoggerFactory loggerFactory,ProductLinkManager productLinkManager, Utilities utilities)
+        public CrawlerManager(ILoggerFactory loggerFactory, ProductLinkManager productLinkManager, Utilities utilities)
         {
             _logger = loggerFactory.CreateLogger<CrawlerManager>();
             _productLinkManager = productLinkManager;
@@ -40,8 +36,9 @@ namespace E_Com.Crawler
             {
                 throw new Exception("No body Found");
             }
-            // Parse all anchor tags (<a> tags) inside the <body> tag
-            var linkElements = bodyNode.SelectNodes(".//a[@href]");
+            //assumption: all products will have img which will be wraped inside <a>
+            //select all <a> elements that have an href attribute and at least one child element that is an < img > need not to be direct
+            var linkElements = bodyNode.SelectNodes(".//a[@href][.//img]");
 
             if (linkElements == null)
             {
@@ -50,14 +47,22 @@ namespace E_Com.Crawler
 
             foreach (var element in linkElements)
             {
-                // Get the href & title attribute value(or inner text as a fallback if title is not available)
+                // Get the href & title attribute value(or imgi alt text as a fallback if title is not available)
                 var href = element.GetAttributeValue("href", string.Empty);
                 var title = element.GetAttributeValue("title", string.Empty).Trim();
-                // if no title does that mean its not a product??
-                if (string.IsNullOrEmpty(title))
+
+                // Find the <img> elements within this <a> tag
+                var imgElement = element.SelectSingleNode(".//img");
+                if (imgElement != null)
                 {
-                    title = element.InnerText.Trim();
+                    // Get the alt attribute value
+                    var altText = imgElement.GetAttributeValue("alt", string.Empty);
+                    if (string.IsNullOrEmpty(title))
+                    {
+                        title = altText;
+                    }
                 }
+
                 if (!string.IsNullOrEmpty(href))
                 {
                     // if complete url && contains base url 
@@ -67,22 +72,28 @@ namespace E_Com.Crawler
                         // href= /product/a=>https://www.domain.com/product/a
                         href = baseUrl + href;
                     }
-                    if (_utilities.containsBaseUrl(baseUrl, href) && !linksTitle.ContainsKey(href))
+                    // assumption: product name will contain more than 3 words/ grp
+                    int? thresholdTitleLength = int.Parse(Environment.GetEnvironmentVariable("ThresholdTitleLength"));
+                    if (_utilities.containsBaseUrl(baseUrl, href) && !linksTitle.ContainsKey(href) && title.Trim().Split(" ").Length > (thresholdTitleLength ?? 3))
                     {
                         linksTitle.Add(href, title);
                     }
+                    //if(title.Trim().Split(" ").Length <= 3)
+                    //{
+                    //    _logger.LogInformation($"Filtered out due to product name threshold => {title}<{href}> ");
+                    //}
                 }
             }
             var links = new List<string>(linksTitle.Keys);
 
             links = _productLinkManager.manager(url, baseUrl, links);
 
-            //assumption title for product will have 2 or more words
-            return linksTitle.Where(keyValuePair => links.Contains(keyValuePair.Key) && keyValuePair.Value.Split(' ').Length >= 2).OrderByDescending(keyValuePair => keyValuePair.Key.Length)
+            //assumption: if product url have query then when comparing with dictionery remove query part here as well
+            return linksTitle.Where(keyValuePair => links.Contains(_utilities.removeQueryPartUrl(keyValuePair.Key))).OrderByDescending(keyValuePair => keyValuePair.Key.Length)
                 .ToDictionary(keyValuePair => keyValuePair.Key, keyValuePair => keyValuePair.Value);
         }
 
-        public async Task<string> crawlerForContent(string url)
+        public async Task<string> getLoadedPageContentHttpClient(string url)
         {
             var uri = new Uri(url);
             var baseUrl = $"{uri.Scheme}://{uri.Host}";
@@ -91,14 +102,10 @@ namespace E_Com.Crawler
 
                 using (var httpClient = new HttpClient())
                 {
-                    httpClient.DefaultRequestHeaders.Add("accept", "*/*");
-                    httpClient.DefaultRequestHeaders.Add("Origin", baseUrl);
-                    httpClient.DefaultRequestHeaders.Add("Referer", baseUrl);
-                    httpClient.DefaultRequestHeaders.Add("Sec-Fetch-Site", "cross-site");
-                    httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
-                    httpClient.DefaultRequestHeaders.Add("Accept-Language", "en-GB,en-US;q=0.9,en;q=0.8");
-                    httpClient.DefaultRequestHeaders.Add("sec-ch-ua", "Chromium\";v=\"128\", \"Not;A=Brand\";v=\"24\", \"Google Chrome\";v=\"128");
-                    httpClient.DefaultRequestHeaders.Add("Sec-Fetch-Mode", "cors");
+                    foreach (var header in getReqHeaders(url))
+                    {
+                        httpClient.DefaultRequestHeaders.Add(header.Key, header.Value);
+                    }
                     var response = await httpClient.GetAsync(url);
                     response.EnsureSuccessStatusCode();
                     var htmlContent = await response.Content.ReadAsStringAsync();
@@ -119,36 +126,49 @@ namespace E_Com.Crawler
         }
         public async Task<string> getLoadedPageContent(string url)
         {
-            // Use Playwright to load the page
-            using var playwright = await Playwright.CreateAsync();
-            var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-            var page = await browser.NewPageAsync();
+            try
+            {
+                // Use Playwright to load the page
+                using var playwright = await Playwright.CreateAsync();
+                var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+                var context = await browser.NewContextAsync();
+                var page = await context.NewPageAsync();
 
-            // Navigate to the URL and wait for the content to load
-            await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+                // Set the required request headers
+                await page.SetExtraHTTPHeadersAsync(getReqHeaders(url));
 
-            // Get the page content (fully rendered HTML including dynamically loaded content)
-            var content = await page.ContentAsync();
+                // Navigate to the URL and wait for the content to load
+                await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.Load });
 
-            // Close the browser
-            await browser.CloseAsync();
+                // Get the page content (fully rendered HTML including dynamically loaded content)
+                var content = await page.ContentAsync();
 
-            return content;
+                // Close the browser
+                await browser.CloseAsync();
+
+                return content;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
-        public async Task<IReadOnlyList<IElementHandle>> getBodyLinkElements(string url)
+        public Dictionary<string, string> getReqHeaders(string url)
         {
-            using var playwright = await Playwright.CreateAsync();
-            var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-            var page = await browser.NewPageAsync();
-
-            await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
-
-            // Extract all the links within the <body> tag
-            var linkElements = await page.Locator("body a[href]").ElementHandlesAsync();
-            await browser.CloseAsync();
-
-            return linkElements;
+            var uri = new Uri(url);
+            var baseUrl = $"{uri.Scheme}://{uri.Host}";
+            return (new()
+            {
+                { "accept", "*/*" },
+                { "accept-encoding", "gzip, deflate, br, zstd" },
+                { "accept-language", "en-GB,en;q=0.9,en-US;q=0.8" },
+                { "sec-ch-ua", $"\"Microsoft Edge\";v=\"129\", \"Not=A?Brand\";v=\"8\", \"Chromium\";v=\"129\"" },
+                { "sec-ch-ua-platform", $"\"Windows\"" },
+                { "sec-fetch-dest", "document" },
+                { "sec-fetch-mode", "navigate" },
+                { "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0" },
+            });
         }
     }
 }
