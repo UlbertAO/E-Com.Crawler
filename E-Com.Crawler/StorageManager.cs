@@ -6,31 +6,19 @@ namespace E_Com.Crawler
     public class StorageManager
     {
         private readonly ILogger _logger;
-        private BlobServiceClient _blobServiceClient;
+        private readonly AppSetting _appSetting;
+        private readonly BlobServiceClient _blobServiceClient;
         public BlobContainerClient _containerClient;
-        public StorageManager(ILoggerFactory loggerFactory)
+        public StorageManager(ILoggerFactory loggerFactory, AppSetting appSetting)
         {
             _logger = loggerFactory.CreateLogger<StorageManager>();
+            _appSetting = appSetting;
 
-            var connectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
-            if (connectionString == null)
-            {
-                var msg = "No AzureWebJobsStorage connection string found in environment variables.";
-                _logger.LogError(msg);
-                throw new Exception(msg);
-            }
-            _blobServiceClient = new BlobServiceClient(connectionString);
+            _blobServiceClient = new BlobServiceClient(appSetting.AzureWebJobsStorage);
         }
         public async Task CreateContainer()
         {
-            var containerName = Environment.GetEnvironmentVariable("ContainerName");
-            if (containerName == null)
-            {
-                var msg = "No containerName found in environment variables. So container cannot be created";
-                _logger.LogError(msg);
-                throw new Exception(msg);
-            }
-            _containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+            _containerClient = _blobServiceClient.GetBlobContainerClient(_appSetting.ContainerName);
             await _containerClient.CreateIfNotExistsAsync();
         }
         public async Task UploadBlob(string hostName, string productUrl, string productName, string htmlContent)
@@ -38,7 +26,7 @@ namespace E_Com.Crawler
             try
             {
                 var productUrlSplit = productUrl.Split('/');
-                var fileName= !string.IsNullOrEmpty(productName) ? $"{productName.Replace("/", "_")}.html":productUrlSplit[productUrlSplit.Length - 1];
+                var fileName = !string.IsNullOrEmpty(productName) ? $"{productName.Replace("/", "_")}.html" : productUrlSplit[productUrlSplit.Length - 1];
                 var currentDate = DateTime.Now.ToString("yyyy/MM/dd");
                 var blobName = $"{hostName}/{currentDate}/{fileName}";
 

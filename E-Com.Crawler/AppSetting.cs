@@ -9,6 +9,7 @@ namespace E_Com.Crawler
 {
     public class AppSetting
     {
+        public string AzureWebJobsStorage { get; private set; }
         public bool IsAnalysisMode { get; private set; }
         public string ContainerName { get; private set; }
         public List<string> EcomUrls { get; private set; }
@@ -19,7 +20,7 @@ namespace E_Com.Crawler
         {
             try
             {
-
+                AzureWebJobsStorage = getStringFromEnv("AzureWebJobsStorage");
                 IsAnalysisMode = getBoolFromEnv("IsAnalysisMode");
                 ContainerName = getStringFromEnv("ContainerName");
                 EcomUrls = getListFromEnv("EcomUrls");
