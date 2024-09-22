@@ -11,10 +11,12 @@ namespace E_Com.Crawler
         private readonly StorageManager _storageManager;
         private readonly CrawlerManager _crawlerManager;
         private readonly Utilities _utilities;
-        public CrawlerCron(IConfiguration configuration, ILoggerFactory loggerFactory, StorageManager storageManager, CrawlerManager crawlerManager, Utilities utilities)
+        private readonly AppSetting _appSetting;
+        public CrawlerCron(IConfiguration configuration, ILoggerFactory loggerFactory, AppSetting appSetting, StorageManager storageManager, CrawlerManager crawlerManager, Utilities utilities)
         {
             _configuration = configuration;
             _logger = loggerFactory.CreateLogger<CrawlerCron>();
+            _appSetting = appSetting;
             _storageManager = storageManager;
             _crawlerManager = crawlerManager;
             _utilities = utilities;

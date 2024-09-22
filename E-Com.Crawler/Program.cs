@@ -12,6 +12,8 @@ try
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 
+        services.AddScoped<AppSetting>();
+
         services.AddScoped<StorageManager>();
         services.AddScoped<CrawlerManager>();
         services.AddScoped<ProductLinkManager>();
