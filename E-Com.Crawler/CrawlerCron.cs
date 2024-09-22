@@ -30,13 +30,8 @@ namespace E_Com.Crawler
             {
                 await _storageManager.CreateContainer();
 
-                var urls = Environment.GetEnvironmentVariable("EcomUrls")?.Split(';');
-                if (urls == null)
-                {
-                    var msg = "URLs found in environment variables.";
-                    _logger.LogError(msg);
-                    throw new Exception(msg);
-                }
+                var urls = _appSetting.EcomUrls;
+
                 foreach (var url in urls)
                 {
                     try
