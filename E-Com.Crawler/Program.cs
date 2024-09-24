@@ -19,6 +19,8 @@ try
         services.AddScoped<ProductLinkManager>();
         services.AddScoped<Utilities>();
 
+        Environment.SetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH", Environment.GetEnvironmentVariable("HOME_EXPANDED"));
+        Microsoft.Playwright.Program.Main(new string[] { "install", "chromium", "--with-deps", });
 
     })
     .Build();
