@@ -11,9 +11,11 @@
 *.sln.docstates
 .vscode/
 .history/
+__azurite*
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
-
+__blob*
+__qu*
 # Mono auto generated files
 mono_crash.*
 
