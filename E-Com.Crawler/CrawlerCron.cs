@@ -23,7 +23,7 @@ namespace E_Com.Crawler
         }
 
         [Function("CrawlerCron")]
-        public async Task Run([TimerTrigger("0 0 6 * * *", RunOnStartup = true)] TimerInfo timer)
+        public async Task Run([TimerTrigger("0 */5 * * * *", RunOnStartup = true)] TimerInfo timer)
         {
             _logger.LogInformation($"Crawler Timer trigger function execution started at: {DateTime.Now}");
             try
