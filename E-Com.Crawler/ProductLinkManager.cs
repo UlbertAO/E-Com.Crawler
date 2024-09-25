@@ -21,10 +21,10 @@ namespace E_Com.Crawler
             string urlPattern1 = @$"{Regex.Escape(baseUrl)}" + @".[^/.]*$";
             productLinks.RemoveAll(link => Regex.IsMatch(link, urlPattern1));
             string urlPattern2 = @$"{Regex.Escape(_utilities.removeQueryPartUrl(url))}" + @".[^/.]*$";
-            productLinks.RemoveAll(link => Regex.IsMatch(link, urlPattern2));
+            productLinks.RemoveAll(link => Regex.IsMatch(link, urlPattern2));// needed??
 
             // assumption urls followed by base url having words seperated by / is not a product url
-            string urlPattern3 = @$"{Regex.Escape(_utilities.removeQueryPartUrl(baseUrl))}" + @"(\/[a-zA-Z]+)+$"; // ^(\/[a-zA-Z]+)+$
+            string urlPattern3 = @$"{Regex.Escape(baseUrl)}" + @"(\/[a-zA-Z]+)+$"; // ^(\/[a-zA-Z]+)+$
             productLinks.RemoveAll(link => Regex.IsMatch(link, urlPattern3));
 
 

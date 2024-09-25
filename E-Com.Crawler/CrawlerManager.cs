@@ -229,9 +229,7 @@ namespace E_Com.Crawler
                         // href= /product/a=>https://www.domain.com/product/a
                         href = baseUrl + href;
                     }
-                    // assumption: product name will contain more than 3 words/ grp
-                    // int thresholdTitleLength = int.Parse(Environment.GetEnvironmentVariable("ThresholdTitleLength") ?? "3");
-                    // if (_utilities.containsBaseUrl(baseUrl, href) && !linksTitle.ContainsKey(href) && title.Trim().Split(" ").Length > thresholdTitleLength)
+
                     // get all a that have title a{productname}
                     if (_utilities.containsBaseUrl(baseUrl, href) && !linksTitle.ContainsKey(href) && !string.IsNullOrEmpty(title))
                     {
