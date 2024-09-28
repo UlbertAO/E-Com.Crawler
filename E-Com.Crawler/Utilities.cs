@@ -18,6 +18,11 @@ namespace E_Com.Crawler
                 return false;
             }
         }
+        public string getBaseUrl(string url)
+        {
+            var uri = new Uri(url);
+            return $"{uri.Scheme}://{uri.Host}";
+        }
         public Boolean containsBaseUrl(string baseUrl, string url)
         {
             return url.StartsWith(baseUrl, StringComparison.OrdinalIgnoreCase);
