@@ -95,7 +95,7 @@ namespace E_Com.Crawler
         {
             try
             {
-                string ScrapingAntURL = $"https://api.scrapingant.com/v2/general?url={Uri.EscapeDataString(url)}&x-api-key={_appSetting.ScrapingAntAPIKEY}&return_page_source=true";
+                string ScrapingAntURL = $"https://api.scrapingant.com/v2/general?url={Uri.EscapeDataString(url)}&x-api-key={_appSetting.ScrapingAntAPIKEY}";
                 using (var httpClient = new HttpClient())
                 {
                     httpClient.DefaultRequestHeaders.Add("useQueryString", "true");
