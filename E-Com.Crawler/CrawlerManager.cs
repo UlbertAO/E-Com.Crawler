@@ -1,6 +1,5 @@
 ﻿using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
-using Microsoft.Playwright;
 using System.Text.Json;
 
 namespace E_Com.Crawler
@@ -82,7 +81,9 @@ namespace E_Com.Crawler
             catch (HttpRequestException ex)
             {
                 _logger.LogInformation("Received error with httpclient now will be using playwright");
-                return await getLoadedPageContent(url);
+                //return await getLoadedPageContent(url);
+                throw new Exception($"Something went wrong, could not fetch content for : {url}");
+
             }
             catch (Exception ex)
             {
@@ -113,35 +114,35 @@ namespace E_Com.Crawler
 
         }
 
-        public async Task<string> getLoadedPageContent(string url)
-        {
-            try
-            {
-                // Use Playwright to load the page
-                using var playwright = await Playwright.CreateAsync();
-                var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-                var context = await browser.NewContextAsync();
-                var page = await context.NewPageAsync();
+        //public async Task<string> getLoadedPageContent(string url)
+        //{
+        //    try
+        //    {
+        //        // Use Playwright to load the page
+        //        using var playwright = await Playwright.CreateAsync();
+        //        var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+        //        var context = await browser.NewContextAsync();
+        //        var page = await context.NewPageAsync();
 
-                // Set the required request headers
-                await page.SetExtraHTTPHeadersAsync(getReqHeaders(url));
+        //        // Set the required request headers
+        //        await page.SetExtraHTTPHeadersAsync(getReqHeaders(url));
 
-                // Navigate to the URL and wait for the content to load
-                await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.Load });
+        //        // Navigate to the URL and wait for the content to load
+        //        await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.Load });
 
-                // Get the page content (fully rendered HTML including dynamically loaded content)
-                var content = await page.ContentAsync();
+        //        // Get the page content (fully rendered HTML including dynamically loaded content)
+        //        var content = await page.ContentAsync();
 
-                // Close the browser
-                await browser.CloseAsync();
+        //        // Close the browser
+        //        await browser.CloseAsync();
 
-                return content;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
+        //        return content;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw ex;
+        //    }
+        //}
 
         public Dictionary<string, string> getReqHeaders(string url)
         {

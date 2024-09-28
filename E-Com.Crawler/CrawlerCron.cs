@@ -77,7 +77,7 @@ namespace E_Com.Crawler
                                 {
                                     try
                                     {
-                                        var productHtmlContent = await _crawlerManager.getLoadedPageContent(keyValuePair.Key);
+                                        var productHtmlContent = await _crawlerManager.getLoadedPageContentScrapingAnt(keyValuePair.Key);
                                         try
                                         {
                                             await _storageManager.UploadBlob(new Uri(url).Host, keyValuePair.Key, keyValuePair.Value, productHtmlContent);
