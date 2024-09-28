@@ -1,6 +1,8 @@
 using System;
+using System.Net;
 using System.Text.Json;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -14,18 +16,32 @@ namespace E_Com.Crawler
         private readonly CrawlerManager _crawlerManager;
         private readonly Utilities _utilities;
         private readonly AppSetting _appSetting;
+        [Function("ManualTriggerCrawler")]
+        public async Task<HttpResponseData> ManualTrigger(
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
+        {
+            _logger.LogInformation("Manual HTTP trigger function processed a request.");
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+            await response.WriteStringAsync("Crawler process completed. Check logs for details.");
+
+            return response;
+        }
+        
         public CrawlerCron(IConfiguration configuration, ILoggerFactory loggerFactory, AppSetting appSetting, StorageManager storageManager, CrawlerManager crawlerManager, Utilities utilities)
         {
-            _configuration = configuration;
             _logger = loggerFactory.CreateLogger<CrawlerCron>();
+            _logger.LogInformation("CrawlerCron instance created at: {time}", DateTime.UtcNow);
+            _configuration = configuration;
             _appSetting = appSetting;
             _storageManager = storageManager;
             _crawlerManager = crawlerManager;
             _utilities = utilities;
         }
-
+        
         [Function("CrawlerCron")]
-        public async Task Run([TimerTrigger("0 0 * * *", RunOnStartup = true)] TimerInfo timer)
+        public async Task Run([TimerTrigger("*/5 * * * * *", RunOnStartup = true)] TimerInfo timer)
         {
             _logger.LogInformation($"Crawler Timer trigger function execution started at: {DateTime.Now}");
             try
@@ -80,7 +96,16 @@ namespace E_Com.Crawler
                                         var productHtmlContent = await _crawlerManager.getLoadedPageContentScrapingAnt(keyValuePair.Key);
                                         try
                                         {
-                                            await _storageManager.UploadBlob(new Uri(url).Host, keyValuePair.Key, keyValuePair.Value, productHtmlContent);
+                                            Uri uri = new Uri(url);
+
+                                        // Remove "www." if it exists, and then take the part before the first "."
+                                        string domain = uri.Host.StartsWith("www.") 
+                                            ? uri.Host.Substring(4).Split('.')[0]  // Remove "www." and take what's before the first dot
+                                            : uri.Host.Split('.')[0];  // Otherwise, just take what's before the first dot
+
+                                        // Use domain in the UploadBlob call
+                                        await _storageManager.UploadBlob(domain, keyValuePair.Key, keyValuePair.Value, productHtmlContent);
+
                                             _logger.LogInformation($"{count}/{totalCount}");
                                             count++;
                                         }
