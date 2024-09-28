@@ -12,6 +12,7 @@ namespace E_Com.Crawler
         public string AzureWebJobsStorage { get; private set; }
         public bool IsAnalysisMode { get; private set; }
         public string ContainerName { get; private set; }
+        public string ScrapingAntAPIKEY { get; private set; }
         public List<string> ParsingStrategy1EcomUrls { get; private set; }
         public List<string> ParsingStrategy2EcomUrls { get; private set; }
         public int ThresholdTitleLength { get; private set; }
@@ -24,6 +25,7 @@ namespace E_Com.Crawler
                 AzureWebJobsStorage = getStringFromEnv("AzureWebJobsStorage");
                 IsAnalysisMode = getBoolFromEnv("IsAnalysisMode");
                 ContainerName = getStringFromEnv("ContainerName");
+                ScrapingAntAPIKEY = getStringFromEnv("ScrapingAntAPIKEY");
                 ParsingStrategy1EcomUrls = getListFromEnv("ParsingStrategy1EcomUrls");
                 ParsingStrategy2EcomUrls = getListFromEnv("ParsingStrategy2EcomUrls");
                 ThresholdTitleLength = getIntFromEnv("ThresholdTitleLength");

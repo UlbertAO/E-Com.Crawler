@@ -22,7 +22,7 @@ namespace E_Com.Crawler
 
         public async Task<Dictionary<string, string>> crawler(string url, Func<HtmlNode, string, Dictionary<string, string>> parsingStrategy)
         {
-            var htmlContent = await getLoadedPageContent(url);
+            var htmlContent = await getLoadedPageContentScrapingAnt(url);
             // Load HTML into HtmlDocument from HtmlAgilityPack
             var htmlDoc = new HtmlDocument();
             htmlDoc.LoadHtml(htmlContent);
@@ -83,6 +83,28 @@ namespace E_Com.Crawler
             {
                 _logger.LogInformation("Received error with httpclient now will be using playwright");
                 return await getLoadedPageContent(url);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Something went wrong, could not fetch content for : {url}");
+            }
+
+        }
+        public async Task<string> getLoadedPageContentScrapingAnt(string url)
+        {
+            try
+            {
+                string ScrapingAntURL = $"https://api.scrapingant.com/v2/general?url={Uri.EscapeDataString(url)}&x-api-key={_appSetting.ScrapingAntAPIKEY}&return_page_source=true";
+                using (var httpClient = new HttpClient())
+                {
+                    httpClient.DefaultRequestHeaders.Add("useQueryString", "true");
+
+                    var response = await httpClient.GetAsync(ScrapingAntURL);
+                    response.EnsureSuccessStatusCode();
+                    var htmlContent = await response.Content.ReadAsStringAsync();
+
+                    return htmlContent;
+                }
             }
             catch (Exception ex)
             {
