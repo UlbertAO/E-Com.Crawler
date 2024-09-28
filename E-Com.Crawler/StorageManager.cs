@@ -27,7 +27,7 @@ namespace E_Com.Crawler
             {
                 var productUrlSplit = productUrl.Split('/');
                 var fileName = !string.IsNullOrEmpty(productName) ? $"{productName.Replace("/", "_")}.html" : productUrlSplit[productUrlSplit.Length - 1];
-                var currentDate = DateTime.Now.ToString("yyyy/MM/dd");
+                var currentDate = DateTime.Now.ToString("yyyy-MM-dd");
                 var blobName = $"{hostName}/{currentDate}/{fileName}";
 
                 BlobClient blobClient = _containerClient.GetBlobClient(blobName);

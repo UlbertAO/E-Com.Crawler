@@ -77,7 +77,7 @@ namespace E_Com.Crawler
             {
                 throw new ArgumentException($"'{key}' is not set or whitespace.");
             }
-            return envValue.Split(";").ToList();
+            return envValue.Split(";").Where(s => !string.IsNullOrEmpty(s)).ToList();
         }
         private int getIntFromEnv(string key)
         {
