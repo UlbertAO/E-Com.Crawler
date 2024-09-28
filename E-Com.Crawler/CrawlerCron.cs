@@ -28,6 +28,8 @@ namespace E_Com.Crawler
         public async Task Run([TimerTrigger("0 0 * * *", RunOnStartup = true)] TimerInfo timer)
         {
             _logger.LogInformation($"Crawler Timer trigger function execution started at: {DateTime.Now}");
+            List<object> analysisList = new List<object>();
+
             try
             {
                 await _storageManager.CreateContainer();
@@ -38,8 +40,6 @@ namespace E_Com.Crawler
                 List<string> urls = new List<string>();
                 urls.AddRange(parsingStrategy1EcomUrls);
                 urls.AddRange(parsingStrategy2EcomUrls);
-
-                List<object> analysisList = new List<object>();
 
                 foreach (var url in urls)
                 {
@@ -107,12 +107,7 @@ namespace E_Com.Crawler
                         _logger.LogError($"Error scraping URL {url}: {ex.Message}");
                     }
                 }
-                if (_appSetting.IsAnalysisMode)
-                {
-                    string jsonString = JsonSerializer.Serialize(analysisList, new JsonSerializerOptions { WriteIndented = true });
-                    // Log the JSON string
-                    _logger.LogInformation(jsonString);
-                }
+
             }
             catch (Exception ex)
             {
@@ -121,6 +116,14 @@ namespace E_Com.Crawler
             }
             finally
             {
+
+                if (_appSetting.IsAnalysisMode)
+                {
+                    string jsonString = JsonSerializer.Serialize(analysisList, new JsonSerializerOptions { WriteIndented = true });
+                    // Log the JSON string
+                    _logger.LogInformation(jsonString);
+                }
+
                 if (timer.ScheduleStatus is not null)
                 {
                     _logger.LogInformation($"Crawler Timer trigger function execution ended at: {DateTime.Now}");
