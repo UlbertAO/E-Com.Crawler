@@ -1,7 +1,7 @@
 ﻿using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 
-namespace E_Com.Crawler
+namespace Scraper.Crawler
 {
     public class StorageManager
     {

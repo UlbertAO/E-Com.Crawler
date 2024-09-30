@@ -1,7 +1,7 @@
 ﻿
 using System.Text.RegularExpressions;
 
-namespace E_Com.Crawler
+namespace Scraper.Crawler
 {
     public class Utilities
     {
@@ -28,19 +28,6 @@ namespace E_Com.Crawler
             return url.StartsWith(baseUrl, StringComparison.OrdinalIgnoreCase);
         }
 
-        /*
-         "https://www.domain.com/productsxxzz/a/b/c/d/e/f/g/h",
-        output:
-        "https://www.domain.com/productsxxzz/a/b/c/d/e/f/g"
-        "https://www.domain.com/productsxxzz/a/b/c/d/e/f"
-        "https://www.domain.com/productsxxzz/a/b/c/d/e"
-        "https://www.domain.com/productsxxzz/a/b/c/d"
-        "https://www.domain.com/productsxxzz/a/b/c"
-        "https://www.domain.com/productsxxzz/a/b"
-        "https://www.domain.com/productsxxzz/a"
-        "https://www.domain.com/productsxxzz"
-        "https://www.domain.com"=> until url becomes the baseurl
-         */
         public List<string> getProgressiveUrls(string url)
         {
             var result = new List<string>();

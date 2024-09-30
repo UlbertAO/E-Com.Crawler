@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
-namespace E_Com.Crawler
+namespace Scraper.Crawler
 {
     public class CrawlerManager
     {

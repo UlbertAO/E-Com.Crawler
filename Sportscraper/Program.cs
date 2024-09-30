@@ -1,4 +1,4 @@
-using E_Com.Crawler;
+using Scraper.Crawler;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

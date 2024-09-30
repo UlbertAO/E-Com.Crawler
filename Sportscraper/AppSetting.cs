@@ -1,11 +1,4 @@
-﻿using Google.Protobuf.WellKnownTypes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace E_Com.Crawler
+﻿namespace Scraper.Crawler
 {
     public class AppSetting
     {

@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace E_Com.Crawler
+namespace Scraper.Crawler
 {
     public class ProductLinkManager
     {
